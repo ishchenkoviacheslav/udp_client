@@ -16,6 +16,8 @@ namespace UdpClientApp
         private static int Client_listenPort = 0;
         private static int Server_listenPort = 0;
         private static string server_ip = string.Empty;
+        private static DateTime[] dateTime = null;
+
         private static void StartListener()
         {
             Client_listenPort = int.Parse(configuration["client_listenPort"]);
@@ -51,7 +53,22 @@ namespace UdpClientApp
                     listener.Close();
                 }
             });
+            //ping proccess
+            Task.Run(() => 
+            {
+                byte[] ping = Encoding.ASCII.GetBytes("ping");
+                while (true)
+                {
+                    for (int i = 0; i < 5; i++)
+                    {
+                        dateTime[i] = DateTime.Now;
+                        sender.Send(ping, ping.Length, server_ip, Server_listenPort);
+                    }
 
+                    Thread.Sleep(5000);
+                }
+            });
+            //type some message
             //Task.Run(() =>
             //{
             while (true)
