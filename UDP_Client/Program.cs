@@ -20,7 +20,7 @@ namespace UdpClientApp
         {
             Client_listenPort = int.Parse(configuration["client_listenPort"]);
             Server_listenPort = int.Parse(configuration["server_listenPort"]);
-            server_ip = configuration["serverip"];
+            server_ip = configuration.GetSection("serverip").Value;
             if (Client_listenPort == 0 || Server_listenPort == 0 || string.IsNullOrEmpty(server_ip))
                 throw new Exception("configuration data is wrong");
             Console.WriteLine("*********Client*******");
