@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -10,11 +12,17 @@ namespace UdpClientApp
 {
     public class UDPListener
     {
-        private const int Client_listenPort = 11001;
-        private const int Server_listenPort = 11000;
-
+        private static IConfigurationRoot configuration;
+        private static int Client_listenPort = 0;
+        private static int Server_listenPort = 0;
+        private static string server_ip = string.Empty;
         private static void StartListener()
         {
+            Client_listenPort = int.Parse(configuration["client_listenPort"]);
+            Server_listenPort = int.Parse(configuration["server_listenPort"]);
+            server_ip = configuration["serverip"];
+            if (Client_listenPort == 0 || Server_listenPort == 0 || string.IsNullOrEmpty(server_ip))
+                throw new Exception("configuration data is wrong");
             Console.WriteLine("*********Client*******");
             UdpClient listener = new UdpClient(Client_listenPort);
             UdpClient sender = new UdpClient();
@@ -57,7 +65,7 @@ namespace UdpClientApp
                 byte[] myString = Encoding.ASCII.GetBytes(message);
                 //umc 46.133.172.211
                 //ukrtelecom 92.112.59.89
-                sender.Send(myString, myString.Length, "46.133.172.211", Server_listenPort);
+                sender.Send(myString, myString.Length, server_ip, Server_listenPort);
             }
             //});
             Console.ReadLine();
@@ -65,6 +73,11 @@ namespace UdpClientApp
 
         public static void Main()
         {
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json");
+
+            configuration = builder.Build();
             StartListener();
         }
     }
