@@ -20,6 +20,7 @@ namespace UdpClientApp
         private static List<DateTime> outputTime = new List<DateTime>();
         private static List<DateTime> inputTime = new List<DateTime>();
         private static byte[] ping = Encoding.ASCII.GetBytes("ping");
+        private static int pauseBetweenPing = 0;
         ///
 
         private static void StartListener()
@@ -30,7 +31,8 @@ namespace UdpClientApp
             Client_listenPort = int.Parse(configuration["client_listenPort"]);
             Server_listenPort = int.Parse(configuration["server_listenPort"]);
             server_ip = configuration.GetSection("serverip").Value;
-            if (Client_listenPort == 0 || Server_listenPort == 0 || string.IsNullOrEmpty(server_ip))
+            pauseBetweenPing = int.Parse(configuration["pausebetweenping"]);
+            if (Client_listenPort == 0 || Server_listenPort == 0 || string.IsNullOrEmpty(server_ip) || pauseBetweenPing < 10)
                 throw new Exception("configuration data is wrong");
             Console.WriteLine("*********Client*******");
             UdpClient listener = new UdpClient(Client_listenPort);
@@ -76,7 +78,7 @@ namespace UdpClientApp
                         outputTime.Add(DateTime.Now);
                         sender.Send(ping, ping.Length, server_ip, Server_listenPort);
                     }
-                    Thread.Sleep(10000);
+                    Thread.Sleep(pauseBetweenPing);
                     List<TimeSpan> timeSpan = new List<TimeSpan>();
                     //if 5 == 5 ...
                     if(outputTime.Count == inputTime.Count)
