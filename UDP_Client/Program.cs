@@ -21,6 +21,7 @@ namespace UdpClientApp
         private static List<DateTime> inputTime = new List<DateTime>();
         private static byte[] ping = Encoding.ASCII.GetBytes("ping");
         private static int pauseBetweenPing = 0;
+        private static int pauseBetweenSendData = 0;
         ///
 
         private static void StartListener()
@@ -32,7 +33,8 @@ namespace UdpClientApp
             Server_listenPort = int.Parse(configuration["server_listenPort"]);
             server_ip = configuration.GetSection("serverip").Value;
             pauseBetweenPing = int.Parse(configuration["pausebetweenping"]);
-            if (Client_listenPort == 0 || Server_listenPort == 0 || string.IsNullOrEmpty(server_ip) || pauseBetweenPing < 10)
+            pauseBetweenSendData = int.Parse(configuration["pauseBetweenSendData"]);
+            if (Client_listenPort == 0 || Server_listenPort == 0 || string.IsNullOrEmpty(server_ip) || pauseBetweenPing < 10 || pauseBetweenSendData < 10)
                 throw new Exception("configuration data is wrong");
             Console.WriteLine("*********Client*******");
             UdpClient listener = new UdpClient(Client_listenPort);
@@ -47,16 +49,17 @@ namespace UdpClientApp
                     {
                         //listen on 11001
                         byte[] bytes = listener.Receive(ref groupEP);
+
                         if(bytes.SequenceEqual(ping))
                         {
                             inputTime.Add(DateTime.Now);
                         }
-                        else
-                        {
-                            //if ping than don't need wait when cw is finished
-                            Console.WriteLine($"Received from {groupEP} :");
-                            Console.WriteLine($" {Encoding.ASCII.GetString(bytes, 0, bytes.Length)}");
-                        }
+                        ////else
+                        ////{
+                        ////    //if ping than don't need wait when cw is finished
+                        ////    Console.WriteLine($"Received from {groupEP} :");
+                        ////    Console.WriteLine($" {Encoding.ASCII.GetString(bytes, 0, bytes.Length)}");
+                        ////}
                     }
                 }
                 catch (SocketException e)
@@ -87,7 +90,7 @@ namespace UdpClientApp
                         {
                             timeSpan.Add(inputTime[i].Subtract(outputTime[i]));
                         }
-                        Console.Clear();
+                        //Console.Clear();
                         Console.BackgroundColor = ConsoleColor.Blue;
 
                         double doubleAverageTicks = timeSpan.Average(ts => ts.Ticks);
@@ -106,8 +109,10 @@ namespace UdpClientApp
             //{
             while (true)
             {
-                Console.Write("Enter message: ");
-                string message = Console.ReadLine();
+                //Console.Write("Enter message: ");
+                //string message = Console.ReadLine();
+                //Thread.Sleep(pauseBetweenSendData);
+                string message = "test";
                 if (message == "stop")
                 {
                     break;
