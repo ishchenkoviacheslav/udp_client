@@ -7,7 +7,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-
+using System.Linq;
 namespace UdpClientApp
 {
     public class UDPListener
@@ -16,10 +16,17 @@ namespace UdpClientApp
         private static int Client_listenPort = 0;
         private static int Server_listenPort = 0;
         private static string server_ip = string.Empty;
-        private static DateTime[] dateTime = null;
+        ///ping
+        private static List<DateTime> outputTime = new List<DateTime>();
+        private static List<DateTime> inputTime = new List<DateTime>();
+        private static byte[] ping = Encoding.ASCII.GetBytes("ping");
+        ///
 
         private static void StartListener()
         {
+            //work slow for ping!
+            Console.WriteLine("Waiting ...");
+
             Client_listenPort = int.Parse(configuration["client_listenPort"]);
             Server_listenPort = int.Parse(configuration["server_listenPort"]);
             server_ip = configuration.GetSection("serverip").Value;
@@ -36,12 +43,18 @@ namespace UdpClientApp
                 {
                     while (true)
                     {
-                        Console.WriteLine("Waiting ...");
                         //listen on 11001
                         byte[] bytes = listener.Receive(ref groupEP);
-
-                        Console.WriteLine($"Received from {groupEP} :");
-                        Console.WriteLine($" {Encoding.ASCII.GetString(bytes, 0, bytes.Length)}");
+                        if(bytes.SequenceEqual(ping))
+                        {
+                            inputTime.Add(DateTime.Now);
+                        }
+                        else
+                        {
+                            //if ping than don't need wait when cw is finished
+                            Console.WriteLine($"Received from {groupEP} :");
+                            Console.WriteLine($" {Encoding.ASCII.GetString(bytes, 0, bytes.Length)}");
+                        }
                     }
                 }
                 catch (SocketException e)
@@ -56,16 +69,34 @@ namespace UdpClientApp
             //ping proccess
             Task.Run(() => 
             {
-                byte[] ping = Encoding.ASCII.GetBytes("ping");
                 while (true)
                 {
                     for (int i = 0; i < 5; i++)
                     {
-                        dateTime[i] = DateTime.Now;
+                        outputTime.Add(DateTime.Now);
                         sender.Send(ping, ping.Length, server_ip, Server_listenPort);
                     }
+                    Thread.Sleep(10000);
+                    List<TimeSpan> timeSpan = new List<TimeSpan>();
+                    //if 5 == 5 ...
+                    if(outputTime.Count == inputTime.Count)
+                    {
+                        for (int i = 0; i < outputTime.Count; i++)
+                        {
+                            timeSpan.Add(inputTime[i].Subtract(outputTime[i]));
+                        }
+                        Console.Clear();
+                        Console.BackgroundColor = ConsoleColor.Blue;
 
-                    Thread.Sleep(5000);
+                        double doubleAverageTicks = timeSpan.Average(ts => ts.Ticks);
+                        long longAverageTicks = Convert.ToInt64(doubleAverageTicks);
+
+                        Console.WriteLine(new TimeSpan(longAverageTicks));
+                        Console.BackgroundColor = ConsoleColor.Black;
+
+                    }
+                    outputTime.Clear();
+                    inputTime.Clear();
                 }
             });
             //type some message
