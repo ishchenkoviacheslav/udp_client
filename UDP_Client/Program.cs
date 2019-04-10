@@ -23,7 +23,7 @@ namespace UdpClientApp
         private static int pauseBetweenPing = 0;
         private static int pauseBetweenSendData = 0;
         ///
-
+        private static int countOfsmsPerSecond = 0;
         private static void StartListener()
         {
             //work slow for ping!
@@ -39,7 +39,8 @@ namespace UdpClientApp
             Console.WriteLine("*********Client*******");
             UdpClient listener = new UdpClient(Client_listenPort);
             //UdpClient sender = new UdpClient();
-
+            DateTime startOfCount = DateTime.UtcNow;
+            TimeSpan OneSecond = new TimeSpan(0, 0, 1);
             IPEndPoint groupEP = null; // new IPEndPoint(IPAddress.Any, listenPort);
             Task.Run(async () =>
             {
@@ -50,15 +51,23 @@ namespace UdpClientApp
                         UdpReceiveResult result = await listener.ReceiveAsync();
                         groupEP = result.RemoteEndPoint;
                         byte[] bytes = result.Buffer;
+                        //ping must be fastest of calculate  data - no one command must slow it(for example cw)
                         if (bytes.SequenceEqual(ping))
                         {
                             inputTime.Add(DateTime.Now);
                         }
                         else
                         {
+                            countOfsmsPerSecond++;
+                            if (DateTime.UtcNow.Subtract(startOfCount) > OneSecond)
+                            {
+                                Console.WriteLine($"Count of sms per 1 second: {countOfsmsPerSecond}");
+                                countOfsmsPerSecond = 0;
+                                startOfCount = DateTime.UtcNow;
+                            }
                             //if ping than don't need wait when cw is finished
-                            Console.WriteLine($"Received from {groupEP} :");
-                            Console.WriteLine($" {Encoding.ASCII.GetString(bytes, 0, bytes.Length)}");
+                            //Console.WriteLine($"Received from {groupEP} :");
+                            //Console.WriteLine($" {Encoding.ASCII.GetString(bytes, 0, bytes.Length)}");
                         }
                     }
                 }
@@ -104,13 +113,12 @@ namespace UdpClientApp
                     inputTime.Clear();
                 }
             });
-            //type some message
+            //
             Task.Run(() =>
             {
                 while (true)
                 {
-                    //Console.Write("Enter message: ");
-                    //string message = Console.ReadLine();
+                    //Thread.Sleep is not so exactly method for stop, but error is not so big(~1 ms)
                     Thread.Sleep(pauseBetweenSendData);
                     string message = "test";
                     if (message == "stop")
@@ -118,8 +126,7 @@ namespace UdpClientApp
                         break;
                     }
                     byte[] myString = Encoding.ASCII.GetBytes(message);
-                    //umc 46.133.172.211
-                    //ukrtelecom 92.112.59.89
+                    
                     listener.SendAsync(myString, myString.Length, server_ip, Server_listenPort);
                 }
             });
