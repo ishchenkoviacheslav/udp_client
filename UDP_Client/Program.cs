@@ -24,6 +24,8 @@ namespace UdpClientApp
         private static int pauseBetweenSendData = 0;
         ///
         private static int countOfsmsPerSecond = 0;
+        private const int SIO_UDP_CONNRESET = -1744830452;
+
         private static void StartListener()
         {
             //work slow for ping!
@@ -38,6 +40,8 @@ namespace UdpClientApp
                 throw new Exception("configuration data is wrong");
             Console.WriteLine("*********Client*******");
             UdpClient listener = new UdpClient(Client_listenPort);
+            //listener.Client.IOControl((IOControlCode)SIO_UDP_CONNRESET, new byte[] { 0, 0, 0, 0 }, null);
+
             //UdpClient sender = new UdpClient();
             DateTime startOfCount = DateTime.UtcNow;
             TimeSpan OneSecond = new TimeSpan(0, 0, 1);
@@ -81,14 +85,14 @@ namespace UdpClientApp
                 }
             });
             //ping proccess
-            Task.Run(() =>
+            Task.Run(async () =>
             {
                 while (true)
                 {
                     for (int i = 0; i < 5; i++)
                     {
                         outputTime.Add(DateTime.Now);
-                        listener.SendAsync(ping, ping.Length, server_ip, Server_listenPort);
+                        await listener.SendAsync(ping, ping.Length, server_ip, Server_listenPort);
                     }
                     Thread.Sleep(pauseBetweenPing);
                     List<TimeSpan> timeSpan = new List<TimeSpan>();
@@ -114,7 +118,7 @@ namespace UdpClientApp
                 }
             });
             //
-            Task.Run(() =>
+            Task.Run(async () =>
             {
                 while (true)
                 {
@@ -127,10 +131,11 @@ namespace UdpClientApp
                     }
                     byte[] myString = Encoding.ASCII.GetBytes(message);
                     
-                    listener.SendAsync(myString, myString.Length, server_ip, Server_listenPort);
+                    await listener.SendAsync(myString, myString.Length, server_ip, Server_listenPort);
                 }
             });
             Console.ReadLine();
+            listener.Dispose();
         }
 
         public static void Main()
