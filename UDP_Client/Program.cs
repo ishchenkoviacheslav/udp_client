@@ -13,36 +13,36 @@ namespace UdpClientApp
     public class UDPListener
     {
         private static IConfigurationRoot configuration;
-        private static int Client_listenPort = 0;
-        private static int Server_listenPort = 0;
+        private static int client_listenPort = 0;
+        private static int server_listenPort = 0;
         private static string server_ip = string.Empty;
         ///ping
         private static List<DateTime> outputTime = new List<DateTime>();
         private static List<DateTime> inputTime = new List<DateTime>();
         private static byte[] ping = Encoding.ASCII.GetBytes("ping");
-        private static int pauseBetweenPing = 0;
-        private static int pauseBetweenSendData = 0;
+        private static int pause_between_ping = 0;
+        private static int pause_between_send_data = 0;
         ///
         private static int countOfsmsPerSecond = 0;
         private const int SIO_UDP_CONNRESET = -1744830452;
 
         private static void StartListener()
         {
-            //work slow for ping!
             Console.WriteLine("Waiting ...");
 
-            Client_listenPort = int.Parse(configuration["client_listenPort"]);
-            Server_listenPort = int.Parse(configuration["server_listenPort"]);
-            server_ip = configuration.GetSection("serverip").Value;
-            pauseBetweenPing = int.Parse(configuration["pausebetweenping"]);
-            pauseBetweenSendData = int.Parse(configuration["pauseBetweenSendData"]);
-            if (Client_listenPort == 0 || Server_listenPort == 0 || string.IsNullOrEmpty(server_ip) || pauseBetweenPing < 10 || pauseBetweenSendData < 10)
+            client_listenPort = int.Parse(configuration[nameof(client_listenPort)]);
+            server_listenPort = int.Parse(configuration[nameof(server_listenPort)]);
+            server_ip = configuration.GetSection(nameof(server_ip)).Value;
+            pause_between_ping = int.Parse(configuration[nameof(pause_between_ping)]);
+            pause_between_send_data = int.Parse(configuration[nameof(pause_between_send_data)]);
+            if (client_listenPort == 0 || server_listenPort == 0 || string.IsNullOrEmpty(server_ip) || pause_between_ping < 10 || pause_between_send_data < 10)
+            {
                 throw new Exception("configuration data is wrong");
+            }
             Console.WriteLine("*********Client*******");
-            UdpClient listener = new UdpClient(Client_listenPort);
+            UdpClient listener = new UdpClient(client_listenPort);
             //listener.Client.IOControl((IOControlCode)SIO_UDP_CONNRESET, new byte[] { 0, 0, 0, 0 }, null);
 
-            //UdpClient sender = new UdpClient();
             DateTime startOfCount = DateTime.UtcNow;
             TimeSpan OneSecond = new TimeSpan(0, 0, 1);
             IPEndPoint groupEP = null; // new IPEndPoint(IPAddress.Any, listenPort);
@@ -92,9 +92,9 @@ namespace UdpClientApp
                     for (int i = 0; i < 5; i++)
                     {
                         outputTime.Add(DateTime.Now);
-                        await listener.SendAsync(ping, ping.Length, server_ip, Server_listenPort);
+                        await listener.SendAsync(ping, ping.Length, server_ip, server_listenPort);
                     }
-                    Thread.Sleep(pauseBetweenPing);
+                    Thread.Sleep(pause_between_ping);
                     List<TimeSpan> timeSpan = new List<TimeSpan>();
                     //if 5 == 5 ...
                     if (outputTime.Count == inputTime.Count)
@@ -123,15 +123,10 @@ namespace UdpClientApp
                 while (true)
                 {
                     //Thread.Sleep is not so exactly method for stop, but error is not so big(~1 ms)
-                    Thread.Sleep(pauseBetweenSendData);
-                    string message = "test";
-                    if (message == "stop")
-                    {
-                        break;
-                    }
-                    byte[] myString = Encoding.ASCII.GetBytes(message);
+                    Thread.Sleep(pause_between_send_data);
+                    byte[] myString = Encoding.ASCII.GetBytes("message");
                     
-                    await listener.SendAsync(myString, myString.Length, server_ip, Server_listenPort);
+                    await listener.SendAsync(myString, myString.Length, server_ip, server_listenPort);
                 }
             });
             Console.ReadLine();
