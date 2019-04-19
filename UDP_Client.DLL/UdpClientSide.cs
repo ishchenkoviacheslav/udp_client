@@ -84,10 +84,11 @@ namespace UDPClient.DLL
                         //ping must be fastest of calculate  data - no one command must slow it(for example cw)
                         if (bytes.SequenceEqual(ping))
                         {
-                            inputTime.Add(DateTime.Now);
+                            inputTime.Add(DateTime.UtcNow);
                         }
                         else
                         {
+                            //only for testing
                             countOfsmsPerSecond++;
                             if (DateTime.UtcNow.Subtract(startOfCount) > OneSecond)
                             {
@@ -95,9 +96,7 @@ namespace UDPClient.DLL
                                 countOfsmsPerSecond = 0;
                                 startOfCount = DateTime.UtcNow;
                             }
-                            //if ping than don't need wait when cw is finished
-                            //Console.WriteLine($"Received from {groupEP} :");
-                            //Console.WriteLine($" {Encoding.ASCII.GetString(bytes, 0, bytes.Length)}");
+                            //here we must receive and update list of visible(in out game) clients
                         }
                     }
                 }
@@ -177,7 +176,7 @@ namespace UDPClient.DLL
             }
         }
         /// <summary>
-        /// This method must run into while
+        /// This method must repeat
         /// </summary>
         /// <param name="clientData"></param>
         public void SendData(ClientData clientData)

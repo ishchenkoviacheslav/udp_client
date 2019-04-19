@@ -1,15 +1,35 @@
-﻿using UDP_Client.DLL.DTO;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using UDP_Client.DLL.DTO;
 using UDPClient.DLL;
 
 namespace UdpClientApp
 {
     public class UDPListener
     {
+        static ClientData clientData = new ClientData() { X = 1, Y = 2, Z = 3 };
+
         public static void Main()
         {
+            Task.Run(() =>
+            {
+                Random r = new Random();
+                while (true)
+                {
+                    Thread.Sleep(10);
+                    clientData.Y = r.Next(0, 10000);
+                }
+            });
+
             UdpClientSide client = new UdpClientSide();
             client.StartService();
-            client.SendData(new ClientData() {X = 1, Y = 2, Z = 3 });
+            client.SendData(clientData);
+            Console.WriteLine("Waiting ...");
+            Console.WriteLine("*********Client*******");
+            
+            Console.ReadLine();
+
 
             //IPAddress serverIP = IPAddress.Parse("127.0.0.1");     // Server IP
             //int port = 27005;                                           // Server port
