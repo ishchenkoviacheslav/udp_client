@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace UDP_Client
+namespace UDP_Client.DLL.DTO
 {
     [Serializable]
     public class ClientData

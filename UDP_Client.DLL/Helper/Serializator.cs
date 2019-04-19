@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
 
-namespace UDP_Client
+namespace UDP_Client.DLL.Helper
 {
     public static class Serializator
     {
-
         public static byte[] Serializer(this object _object)
         {
             byte[] bytes;
