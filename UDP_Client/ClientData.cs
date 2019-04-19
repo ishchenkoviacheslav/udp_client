@@ -4,6 +4,7 @@ using System.Text;
 
 namespace UDP_Client
 {
+    [Serializable]
     public class ClientData
     {
         public float X { get; set; }

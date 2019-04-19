@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
+using UDP_Client;
+
 namespace UdpClientApp
 {
     public class UDPListener
@@ -25,6 +27,26 @@ namespace UdpClientApp
         ///
         private static int countOfsmsPerSecond = 0;
         private const int SIO_UDP_CONNRESET = -1744830452;
+
+        private static object Locker = new object();
+        /// <summary>
+        /// use only in lock context(Locker object)
+        /// </summary>
+        /// 
+        private static TimeSpan pingTime = new TimeSpan(0,0,0,0,0);
+
+        public TimeSpan PingTime
+        {
+            get
+            {
+                TimeSpan _pingTime;
+                lock (Locker)
+                {
+                    _pingTime = new TimeSpan(pingTime.Hours, pingTime.Minutes, pingTime.Seconds,pingTime.Milliseconds);
+                }
+                return _pingTime;
+            }
+        }
 
         private static void StartListener()
         {
@@ -46,6 +68,7 @@ namespace UdpClientApp
             DateTime startOfCount = DateTime.UtcNow;
             TimeSpan OneSecond = new TimeSpan(0, 0, 1);
             IPEndPoint groupEP = null; // new IPEndPoint(IPAddress.Any, listenPort);
+            //receiver
             Task.Run(async () =>
             {
                 try
@@ -87,46 +110,67 @@ namespace UdpClientApp
             //ping proccess
             Task.Run(async () =>
             {
-                while (true)
+                try
                 {
-                    for (int i = 0; i < 5; i++)
+                    while (true)
                     {
-                        outputTime.Add(DateTime.Now);
-                        await listener.SendAsync(ping, ping.Length, server_ip, server_listenPort);
-                    }
-                    Thread.Sleep(pause_between_ping);
-                    List<TimeSpan> timeSpan = new List<TimeSpan>();
-                    //if 5 == 5 ...
-                    if (outputTime.Count == inputTime.Count)
-                    {
-                        for (int i = 0; i < outputTime.Count; i++)
+                        //5 send to server(without pause), and fix send-time
+                        for (int i = 0; i < 5; i++)
                         {
-                            timeSpan.Add(inputTime[i].Subtract(outputTime[i]));
+                            outputTime.Add(DateTime.UtcNow);
+                            await listener.SendAsync(ping, ping.Length, server_ip, server_listenPort);
                         }
-                        //Console.Clear();
-                        Console.BackgroundColor = ConsoleColor.Blue;
+                        Thread.Sleep(pause_between_ping);
+                        List<TimeSpan> timeSpan = new List<TimeSpan>();
+                        //if 5 == 5 ...count of send and receive ping requests
+                        //if not equals than ignore
+                        if (outputTime.Count == inputTime.Count)
+                        {
+                            //calculate ping time
+                            for (int i = 0; i < outputTime.Count; i++)
+                            {
+                                timeSpan.Add(inputTime[i].Subtract(outputTime[i]));
+                            }
+                            Console.BackgroundColor = ConsoleColor.Blue;
+                            //calculate ping time
+                            double doubleAverageTicks = timeSpan.Average(ts => ts.Ticks);
+                            long longAverageTicks = Convert.ToInt64(doubleAverageTicks);
+                            lock (Locker)
+                            {
+                                pingTime = new TimeSpan(longAverageTicks);
+                            }
+                            //to do: fix this time in variable
+                            Console.WriteLine(pingTime);
+                            Console.BackgroundColor = ConsoleColor.Black;
 
-                        double doubleAverageTicks = timeSpan.Average(ts => ts.Ticks);
-                        long longAverageTicks = Convert.ToInt64(doubleAverageTicks);
-
-                        Console.WriteLine(new TimeSpan(longAverageTicks));
-                        Console.BackgroundColor = ConsoleColor.Black;
-
+                        }
+                        outputTime.Clear();
+                        inputTime.Clear();
                     }
-                    outputTime.Clear();
-                    inputTime.Clear();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
                 }
             });
-            //
-            Task.Run(async () =>
+            //send
+            Task.Run(() =>
             {
-                while (true)
+                try
                 {
-                    //Thread.Sleep is not so exactly method for stop, but error is not so big(~1 ms)
-                    Thread.Sleep(pause_between_send_data);
-                    byte[] myString = Encoding.ASCII.GetBytes("message");
-                    
-                    await listener.SendAsync(myString, myString.Length, server_ip, server_listenPort);
+                    ClientData cd = new ClientData() { X = 1.5F, Y = 2.3F, Z = 3.1F };
+                    while (true)
+                    {
+                        //Thread.Sleep is not so exactly method for stop, but error is not so big(~1 ms)
+                        Thread.Sleep(pause_between_send_data);
+                        //199 bytes!!!Why?!
+                        byte[] bytes = cd.Serializer();
+                        listener.Send(bytes, bytes.Length, server_ip, server_listenPort);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
                 }
             });
             Console.ReadLine();
