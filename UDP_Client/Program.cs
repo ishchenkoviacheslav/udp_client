@@ -27,9 +27,7 @@ namespace UdpClientApp
             client.SendData(clientData);
             Console.WriteLine("Waiting ...");
             Console.WriteLine("*********Client*******");
-            
             Console.ReadLine();
-
 
             //IPAddress serverIP = IPAddress.Parse("127.0.0.1");     // Server IP
             //int port = 27005;                                           // Server port

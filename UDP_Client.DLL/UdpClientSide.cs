@@ -13,7 +13,7 @@ using UDP_Client.DLL.Helper;
 
 namespace UDPClient.DLL
 {
-    public class UdpClientSide: IDisposable
+    public class UdpClientSide
     {
         public UdpClientSide()
         {
@@ -49,17 +49,33 @@ namespace UDPClient.DLL
         private int countOfsmsPerSecond = 0;
         private const int SIO_UDP_CONNRESET = -1744830452;
 
-        private object Locker = new object();
+        private object LockerPing = new object();
+        private object LockerCollection = new object();
         private TimeSpan pingTime = new TimeSpan(0, 0, 0, 0, 0);
         UdpClient listener = null;
-        private bool isDisposed = false;
-
+        public List<ClientData> myVisibleClients = new List<ClientData>();
+        public List<ClientData> MyVisibleClients
+        {
+            get
+            {
+                List<ClientData> _temp = new List<ClientData>();
+                lock (LockerCollection)
+	            {
+                    _temp = myVisibleClients.ToList();
+                    //for (int t = 0; t < myVisibleClients.Count; t++)
+                    //{
+                    //    _temp.Add(new ClientData() { X = myVisibleClients[t].X, Y = myVisibleClients[t].Y, Z = myVisibleClients[t].Z});
+                    //}
+	            }
+                return _temp;
+            }
+        }
         public TimeSpan PingTime
         {
             get
             {
                 TimeSpan _pingTime;
-                lock (Locker)
+                lock (LockerPing)
                 {
                     _pingTime = new TimeSpan(pingTime.Hours, pingTime.Minutes, pingTime.Seconds, pingTime.Milliseconds);
                 }
@@ -68,137 +84,143 @@ namespace UDPClient.DLL
         }
         public void StartService()
         {
-            DateTime startOfCount = DateTime.UtcNow;
-            TimeSpan OneSecond = new TimeSpan(0, 0, 1);
-            IPEndPoint groupEP = null; // new IPEndPoint(IPAddress.Any, listenPort);
-            //receiver
-            Task.Run(async () =>
+            try
             {
-                try
+                DateTime startOfCount = DateTime.UtcNow;
+                TimeSpan OneSecond = new TimeSpan(0, 0, 1);
+                IPEndPoint groupEP = null; // new IPEndPoint(IPAddress.Any, listenPort);
+                                           //receiver
+                Task.Run(async () =>
                 {
-                    while (true)
+                    try
                     {
-                        UdpReceiveResult result = await listener.ReceiveAsync();
-                        groupEP = result.RemoteEndPoint;
-                        byte[] bytes = result.Buffer;
-                        //ping must be fastest of calculate  data - no one command must slow it(for example cw)
-                        if (bytes.SequenceEqual(ping))
+                        while (true)
                         {
-                            inputTime.Add(DateTime.UtcNow);
-                        }
-                        else
-                        {
-                            //only for testing
-                            countOfsmsPerSecond++;
-                            if (DateTime.UtcNow.Subtract(startOfCount) > OneSecond)
+                            UdpReceiveResult result = await listener.ReceiveAsync();
+                            groupEP = result.RemoteEndPoint;
+                            byte[] bytes = result.Buffer;
+                            //ping must be fastest of calculate  data - no one command must slow it(for example cw)
+                            if (bytes.SequenceEqual(ping))
                             {
-                                Console.WriteLine($"Count of sms per 1 second: {countOfsmsPerSecond}");
-                                countOfsmsPerSecond = 0;
-                                startOfCount = DateTime.UtcNow;
+                                inputTime.Add(DateTime.UtcNow);
                             }
-                            //here we must receive and update list of visible(in out game) clients
+                            else
+                            {
+                                //myVisibleClients = (List<ClientData>)bytes.Deserializer();
+                                //only for testing
+                                countOfsmsPerSecond++;
+                                if (DateTime.UtcNow.Subtract(startOfCount) > OneSecond)
+                                {
+                                    Console.WriteLine($"Count of sms per 1 second: {countOfsmsPerSecond}");
+                                    countOfsmsPerSecond = 0;
+                                    startOfCount = DateTime.UtcNow;
+                                }
+                                //here we must receive and update list of visible(in out game) clients
+                            }
                         }
                     }
-                }
-                catch (SocketException e)
-                {
-                    throw e;
-                }
-                finally
-                {
-                    listener.Close();
-                }
-            });
-            //ping proccess
-            Task.Run(async () =>
-            {
-                try
-                {
-                    while (true)
+                    catch (SocketException e)
                     {
-                        //5 send to server(without pause), and fix send-time
-                        for (int i = 0; i < 5; i++)
-                        {
-                            outputTime.Add(DateTime.UtcNow);
-                            await listener.SendAsync(ping, ping.Length, server_ip, server_listenPort);
-                        }
-                        Thread.Sleep(pause_between_ping);
-                        List<TimeSpan> timeSpan = new List<TimeSpan>();
-                        //if 5 == 5 ...count of send and receive ping requests
-                        //if not equals than ignore
-                        if (outputTime.Count == inputTime.Count)
-                        {
-                            //calculate ping time
-                            for (int i = 0; i < outputTime.Count; i++)
-                            {
-                                timeSpan.Add(inputTime[i].Subtract(outputTime[i]));
-                            }
-                            Console.BackgroundColor = ConsoleColor.Blue;
-                            //calculate ping time
-                            double doubleAverageTicks = timeSpan.Average(ts => ts.Ticks);
-                            long longAverageTicks = Convert.ToInt64(doubleAverageTicks);
-                            lock (Locker)
-                            {
-                                pingTime = new TimeSpan(longAverageTicks);
-                            }
-                            //to do: fix this time in variable
-                            Console.WriteLine(pingTime);
-                            Console.BackgroundColor = ConsoleColor.Black;
-
-                        }
-                        outputTime.Clear();
-                        inputTime.Clear();
+                        throw e;
                     }
-                }
-                catch (Exception ex)
+                    finally
+                    {
+                        listener.Close();
+                    }
+                });
+                //ping proccess
+                Task.Run(() =>
                 {
-                    Console.WriteLine(ex.Message);
-                }
-            });
-            //send
+                    try
+                    {
+                        while (true)
+                        {
+                            //5 send to server(without pause), and fix send-time
+                            for (int i = 0; i < 5; i++)
+                            {
+                                outputTime.Add(DateTime.UtcNow);
+                                listener.Send(ping, ping.Length, server_ip, server_listenPort);
+                            }
+                            Thread.Sleep(pause_between_ping);
+                            List<TimeSpan> timeSpan = new List<TimeSpan>();
+                            //if 5 == 5 ...count of send and receive ping requests
+                            //if not equals than ignore
+                            if (outputTime.Count == inputTime.Count)
+                            {
+                                //calculate ping time
+                                for (int i = 0; i < outputTime.Count; i++)
+                                {
+                                    timeSpan.Add(inputTime[i].Subtract(outputTime[i]));
+                                }
+                                Console.BackgroundColor = ConsoleColor.Blue;
+                                //calculate ping time
+                                double doubleAverageTicks = timeSpan.Average(ts => ts.Ticks);
+                                long longAverageTicks = Convert.ToInt64(doubleAverageTicks);
+                                lock (LockerPing)
+                                {
+                                    pingTime = new TimeSpan(longAverageTicks);
+                                }
+                                //to do: fix this time in variable
+                                Console.WriteLine(pingTime);
+                                Console.BackgroundColor = ConsoleColor.Black;
+
+                            }
+                            outputTime.Clear();
+                            inputTime.Clear();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        throw ex;
+                    }
+                    finally
+                    {
+                        listener.Close();
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
 
-        public void Dispose()
-        {
-            if(!isDisposed)
-            {
-                listener.Dispose();
-                isDisposed = true;
-            }
-        }
-        ~UdpClientSide()
-        {
-            //if it not disposed
-            if (!isDisposed)
-            {
-                listener.Dispose();
-                isDisposed = true;
-            }
-        }
         /// <summary>
         /// This method must repeat
         /// </summary>
         /// <param name="clientData"></param>
         public void SendData(ClientData clientData)
         {
-            Task.Run(() =>
+            try
             {
-                try
+                Task.Run(() =>
                 {
-                    while (true)
+                    try
                     {
-                        //Thread.Sleep is not so exactly method for stop, but error is not so big(~1 ms)
-                        Thread.Sleep(pause_between_send_data);
-                        //199 bytes!!!Why?!
-                        byte[] bytes = clientData.Serializer();
-                        listener.Send(bytes, bytes.Length, server_ip, server_listenPort);
+                        while (true)
+                        {
+                            //Thread.Sleep is not so exactly method for stop, but error is not so big(~1 ms)
+                            Thread.Sleep(pause_between_send_data);
+                            //199 bytes!!!Why?!
+                            byte[] bytes = clientData.Serializer();
+                            listener.Send(bytes, bytes.Length, server_ip, server_listenPort);
+                        }
                     }
-                }
-                catch (Exception ex)
-                {
-                    throw ex;
-                }
-            });
+                    catch (Exception ex)
+                    {
+                        throw ex;
+                    }
+                    finally
+                    {
+                        listener.Close();
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            
         }
     }
 }
