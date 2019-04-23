@@ -1,14 +1,14 @@
-﻿using System;
+﻿using Shared;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
-using UDP_Client.DLL.DTO;
 using UDPClient.DLL;
 
 namespace UdpClientApp
 {
     public class UDPListener
     {
-        static ClientData clientData = new ClientData() { X = 1, Y = 2, Z = 3 };
+        static ClientData clientData = new ClientData() {ID = 5, X = 1, Y = 2, Z = 3 };
 
         public static void Main()
         {

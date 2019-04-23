@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Shared;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,7 +9,6 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using UDP_Client.DLL.DTO;
 using UDP_Client.DLL.Helper;
 
 namespace UDPClient.DLL
@@ -107,6 +107,7 @@ namespace UDPClient.DLL
                             else
                             {
                                 //myVisibleClients = (List<ClientData>)bytes.Deserializer();
+
                                 //only for testing
                                 countOfsmsPerSecond++;
                                 if (DateTime.UtcNow.Subtract(startOfCount) > OneSecond)

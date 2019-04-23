@@ -17,4 +17,10 @@
     <ProjectReference Include="..\UDP_Client.DLL\UDP_Client.DLL.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="Shared">
+      <HintPath>..\..\UDP_server\Shared\bin\Debug\netstandard2.0\Shared.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>
