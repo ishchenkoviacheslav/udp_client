@@ -107,7 +107,40 @@ namespace UDPClient.DLL
                             else
                             {
                                 //myVisibleClients = (List<ClientData>)bytes.Deserializer();
+                                //16 - 4 prop by 4 bytes every(used type float) = 16 bytes 1 object
+                                if(bytes.Length % 16 != 0)
+                                {
+                                    //client receive not full packet(udp)
+                                    //receive new packet
+                                    Console.WriteLine($"bytes length is not 16!");
+                                    continue;
+                                }
+                                else
+                                {
+                                    byte[] tempArray = new byte[4];
+                                    ClientData clientData = null;
+                                    lock (LockerCollection)
+                                    {
+                                        myVisibleClients = new List<ClientData>();
+                                        //16 - 4 prop by 4 bytes every(used type float) = 16 bytes 1 object
+                                        for (int c = 0; c < bytes.Length; c += 16)
+                                        {
+                                            clientData = new ClientData();
+                                            Buffer.BlockCopy(bytes, c, tempArray, 0, tempArray.Length);
+                                            clientData.ID = BitConverter.ToSingle(tempArray, 0);
 
+                                            Buffer.BlockCopy(bytes, c + 4, tempArray, 0, tempArray.Length);
+                                            clientData.X = BitConverter.ToSingle(tempArray, 0);
+
+                                            Buffer.BlockCopy(bytes, c + 8, tempArray, 0, tempArray.Length);
+                                            clientData.Y = BitConverter.ToSingle(tempArray, 0);
+
+                                            Buffer.BlockCopy(bytes, c + 12, tempArray, 0, tempArray.Length);
+                                            clientData.Z = BitConverter.ToSingle(tempArray, 0);
+                                            myVisibleClients.Add(clientData);
+                                        }
+                                    }
+                                }
                                 //only for testing
                                 countOfsmsPerSecond++;
                                 if (DateTime.UtcNow.Subtract(startOfCount) > OneSecond)
@@ -203,6 +236,7 @@ namespace UDPClient.DLL
                             //Thread.Sleep is not so exactly method for stop, but error is not so big(~1 ms)
                             Thread.Sleep(pause_between_send_data);
                             //199 bytes!!!Why?!
+                            //to do: use another algorithm? and also in server
                             byte[] bytes = clientData.Serializer();
                             listener.Send(bytes, bytes.Length, server_ip, server_listenPort);
                         }
