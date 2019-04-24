@@ -5,7 +5,7 @@ using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 
-namespace UDP_Client.DLL.Helper
+namespace UDPClient.DLL.Helper
 {
     public static class Serializator
     {

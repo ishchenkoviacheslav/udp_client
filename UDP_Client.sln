@@ -5,7 +5,9 @@ VisualStudioVersion = 15.0.28307.168
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UDP_Client", "UDP_Client\UDP_Client.csproj", "{FA617262-C899-44AC-8E39-EA875E0E669E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UDP_Client.DLL", "UDP_Client.DLL\UDP_Client.DLL.csproj", "{7E410330-AB10-47E2-A474-8A1455CC35A3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UDP_Client.DLL", "UDP_Client.DLL\UDP_Client.DLL.csproj", "{7E410330-AB10-47E2-A474-8A1455CC35A3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Udp_client_test_forms", "Udp_client_test_forms\Udp_client_test_forms.csproj", "{CE7F3781-D8DB-4BE3-9B63-757ED241F363}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{7E410330-AB10-47E2-A474-8A1455CC35A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7E410330-AB10-47E2-A474-8A1455CC35A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7E410330-AB10-47E2-A474-8A1455CC35A3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CE7F3781-D8DB-4BE3-9B63-757ED241F363}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE7F3781-D8DB-4BE3-9B63-757ED241F363}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CE7F3781-D8DB-4BE3-9B63-757ED241F363}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CE7F3781-D8DB-4BE3-9B63-757ED241F363}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

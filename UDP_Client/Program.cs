@@ -23,7 +23,6 @@ namespace UdpClientApp
             });
 
             UdpClientSide client = new UdpClientSide();
-            client.StartService();
             client.SendData(clientData);
             Console.WriteLine("Waiting ...");
             Console.WriteLine("*********Client*******");

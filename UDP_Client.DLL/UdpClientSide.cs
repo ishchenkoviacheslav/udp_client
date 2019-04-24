@@ -9,7 +9,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using UDP_Client.DLL.Helper;
+using UDPClient.DLL.Helper;
 
 namespace UDPClient.DLL
 {
@@ -34,6 +34,7 @@ namespace UDPClient.DLL
             }
             listener = new UdpClient(client_listenPort);
             //listener.Client.IOControl((IOControlCode)SIO_UDP_CONNRESET, new byte[] { 0, 0, 0, 0 }, null);
+            StartService();
         }
         private IConfigurationRoot configuration;
         private int client_listenPort = 0;
@@ -53,7 +54,7 @@ namespace UDPClient.DLL
         private object LockerCollection = new object();
         private TimeSpan pingTime = new TimeSpan(0, 0, 0, 0, 0);
         UdpClient listener = null;
-        public List<ClientData> myVisibleClients = new List<ClientData>();
+        private List<ClientData> myVisibleClients = new List<ClientData>();
         public List<ClientData> MyVisibleClients
         {
             get
@@ -82,7 +83,7 @@ namespace UDPClient.DLL
                 return _pingTime;
             }
         }
-        public void StartService()
+        private void StartService()
         {
             try
             {
