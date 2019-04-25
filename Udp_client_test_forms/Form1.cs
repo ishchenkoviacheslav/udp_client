@@ -45,9 +45,10 @@ namespace Udp_client_test_forms
                 Pen myPen = new Pen(Color.Green, 3);
                 Pen anotherUsers = new Pen(Color.Red, 3);
                 clientData.ID = r.Next(1,1000000);
-                g.Clear(Color.White);
                 while (true)
                 {
+                    g.Clear(Color.White);
+
                     clientData.X = r.Next(10, 400);
                     clientData.Y = r.Next(10, 400);
 
@@ -58,7 +59,7 @@ namespace Udp_client_test_forms
                         DrawCircle(new PaintEventArgs(g, new Rectangle()), udpClient.MyVisibleClients[i], 10, 10, anotherUsers);
                     }
 
-                    Thread.Sleep(3000);
+                    Thread.Sleep(300);
                 }
             });
             //Task.Run(() => 
