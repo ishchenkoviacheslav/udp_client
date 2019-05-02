@@ -141,7 +141,7 @@ namespace UDPClient.DLL
                                             clientData.Z = BitConverter.ToSingle(tempArray, 0);
 
                                             Buffer.BlockCopy(bytes, c + 16, tempArray, 0, tempArray.Length);
-                                            clientData.NumberOfPacket = BitConverter.ToSingle(tempArray, 0);
+                                            clientData.NumberOfPacket = BitConverter.ToInt32(tempArray, 0);
 
                                             myVisibleClients.Add(clientData);
                                         }
@@ -233,14 +233,14 @@ namespace UDPClient.DLL
         {
             try
             {
-                float numberOfPacket = 1;
+                int numberOfPacket = 1;
                 Task.Run(() =>
                 {
                     try
                     {
                         while (true)
                         {
-                            if(numberOfPacket == float.MaxValue)
+                            if(numberOfPacket == int.MaxValue)
                             {
                                 numberOfPacket = 1;
                             }
